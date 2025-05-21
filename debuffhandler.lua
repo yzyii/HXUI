@@ -10,10 +10,12 @@ T{
 };
 
 -- TO DO: Audit these messages for which ones are actually useful
-local statusOnMes = T{160, 164, 166, 186, 194, 203, 205, 230, 236, 266, 267, 268, 269, 237, 271, 272, 277, 278, 279, 280, 319, 320, 375, 412, 645, 754, 755, 804};
-local statusOffMes = T{206, 64, 159, 168, 204, 206, 321, 322, 341, 342, 343, 344, 350, 378, 531, 647, 805, 806};
+local statusOnMes = T{101, 127, 160, 164, 166, 186, 194, 203, 205, 230, 236, 266, 267, 268, 269, 237, 271, 272, 277, 278, 279, 280, 319, 320, 375, 412, 645, 754, 755, 804};
+local statusOffMes = T{64, 159, 168, 204, 206, 321, 322, 341, 342, 343, 344, 350, 378, 531, 647, 805, 806};
 local deathMes = T{6, 20, 97, 113, 406, 605, 646};
 local spellDamageMes = T{2, 252, 264, 265};
+local additionalEffectJobAbilities = T{22, 45, 46, 77}; --energy drain, mug, shield bash, weapon bash
+local additionalEffectMes = T{160};
 
 local function ApplyMessage(debuffs, action)
 
@@ -25,14 +27,19 @@ local function ApplyMessage(debuffs, action)
 
     for _, target in pairs(action.Targets) do
         for _, ability in pairs(target.Actions) do
+            
             -- Set up our state
             local spell = action.Param
             local message = ability.Message
-            if (debuffs[target.Id] == nil) then
-                debuffs[target.Id] = T{};
+            local additionalEffect
+
+            if (ability.AdditionalEffect ~= nil and ability.AdditionalEffect.Message ~= nil) then
+                additionalEffect = ability.AdditionalEffect.Message
             end
 
-
+            if (debuffs[target.Id] == nil) then
+                debuffs[target.Id] = T{}; 
+            end
 
             if action.Type == 13 then
                 if spell == 1908 then -- nightmare
@@ -57,7 +64,7 @@ local function ApplyMessage(debuffs, action)
                     debuffs[target.Id][135] = expiry
                 end
             elseif statusOnMes:contains(message) then
-                -- Regular debuffs
+                -- Regular (de)buffs
                 local buffId = ability.Param or (action.Type == 4 and buffTable.GetBuffIdBySpellId(spell) or nil);
                 if (buffId == nil) then
                     return
@@ -105,8 +112,57 @@ local function ApplyMessage(debuffs, action)
                     debuffs[target.Id][buffId] = now + 78
                 elseif spell == 422 or spell == 421 then -- elegies
                     debuffs[target.Id][buffId] = now + 216
+                elseif spell == 321 then -- bully
+                    debuffs[target.Id][buffId] = now + 60
+                elseif spell == 688 then -- mighty strikes
+                    debuffs[target.Id][buffId] = now + 45
+                elseif spell == 690 then -- hundred fist
+                    debuffs[target.Id][buffId] = now + 45
+                elseif spell == 691 then -- manafont
+                    debuffs[target.Id][buffId] = now + 60
+                elseif spell == 692 then -- chainspell
+                    debuffs[target.Id][buffId] = now + 60
+                elseif spell == 693 then -- perfect dodge
+                    debuffs[target.Id][buffId] = now + 30
+                elseif spell == 694 then -- invincible
+                    debuffs[target.Id][buffId] = now + 30
+                elseif spell == 695 then -- blood weapon
+                    debuffs[target.Id][buffId] = now + 30
                 else -- Handle unknown status effect @ 5 minutes
                     debuffs[target.Id][buffId] = now + 300;
+                end
+            elseif action.Type == 3 and additionalEffectJobAbilities:contains(spell) then
+                if spell == 22 and message == 185 then -- energy drain
+                    if (debuffs[target.Id][13] == nil or debuffs[target.Id][13] < now) then
+                        debuffs[target.Id][13] = now + 120
+                    end
+                elseif spell == 45 and message == 129 then -- mug
+                    if (debuffs[target.Id][448] == nil or debuffs[target.Id][448] < now) then
+                        debuffs[target.Id][448] = now + 30
+                    end
+                elseif spell == 46 then -- shield bash
+                    if (debuffs[target.Id][10] == nil or debuffs[target.Id][10] < now) then
+                        debuffs[target.Id][10] = now + 6
+                    end
+                elseif spell == 77 then -- weapon bash
+                    if (debuffs[target.Id][10] == nil or debuffs[target.Id][10] < now) then
+                        debuffs[target.Id][10] = now + 6
+                    end
+                end
+            elseif additionalEffect ~= nil and additionalEffectMes:contains(additionalEffect) then
+                local buffId = ability.AdditionalEffect.Param;
+                if (buffId == nil) then
+                    return
+                end
+
+                if buffId == 2 then -- sleep bolt
+                    debuffs[target.Id][buffId] = now + 25
+                elseif buffId == 149 then -- defense down/acid bolt
+                    debuffs[target.Id][buffId] = now + 60
+                elseif buffId == 12 then -- gravity/mandau
+                    debuffs[target.Id][buffId] = now + 30
+                else
+                    debuffs[target.Id][buffId] = now + 30
                 end
             end
         end
