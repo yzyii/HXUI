@@ -24,7 +24,7 @@
 
 addon.name      = 'HXUI';
 addon.author    = 'Team HXUI (Tirem, Shuu, colorglut, RheaCloud)';
-addon.version   = '1.1.1-rag1';
+addon.version   = '1.1.1-rag5';
 addon.desc      = 'Multiple UI elements with manager';
 addon.link      = 'https://github.com/tirem/HXUI'
 
