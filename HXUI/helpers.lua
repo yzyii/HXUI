@@ -402,7 +402,7 @@ function DrawStatusIcons(statusIds, iconSize, maxColumns, maxRows, drawBg, xOffs
                 local textObjName = "debuffText" .. tostring(i)
                 if buffTimes ~= nil then
                     local startX, startY = imgui.GetCursorScreenPos();
-                    local textPosX = startX + (i-1)*iconSize + iconSize/2 + i - 1
+                    local textPosX = startX + xOffset + (i-1)*iconSize + i + 1
                     local textPosY = startY
 					
                     local textObj = debuffTable[textObjName]
